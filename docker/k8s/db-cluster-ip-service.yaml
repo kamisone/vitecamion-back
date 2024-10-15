@@ -8,5 +8,5 @@ spec:
   selector:
     component: back_db
   ports:
-    -port: 5432
-    targetPort: 5432
+    - port: 5432
+      targetPort: 5432
