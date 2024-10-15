@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
         
       - name: Build docker image
-        run: docker build -t mo29172/vitecamion_back:v${{ github.run_number }} -f ./docker/Dockerfile ./
+        run: docker build -t mo29172/vitecamion_back:v${{ github.run_number }} -f ./docker/back/Dockerfile ./
 
 
       - name: Push image to DockerHub
@@ -41,7 +41,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
-          source: 'docker/k8s/back-deployment.yaml,docker/k8s/back-cluster-ip-service.yaml,docker/k8s/back-ingress-service.yaml,docker/k8s/back-hpa.yaml'
+          source: 'docker/k8s/back-deployment.yaml,docker/k8s/back-cluster-ip-service.yaml,docker/k8s/back-ingress-service.yaml,docker/k8s/back-hpa.yaml,docker/k8s/db-persistent-volume-claim.yaml,docker/k8s/db-deployment.yaml,docker/k8s/db-cluster-ip-service.yaml,'
           target: '/srv/k8s/back'
           strip_components: 2
 
@@ -64,7 +64,13 @@ jobs:
           script: |
             kubectl delete secret back-envs
             kubectl create secret generic back-envs \
-            --from-literal PORT=${{ secrets.PORT }}
+            --from-literal PORT=${{ secrets.PORT }} \
+            --from-literal TYPEORM_HOST=${{ secrets.TYPEORM_HOST }} \
+            --from-literal TYPEORM_PORT=${{ secrets.TYPEORM_PORT }} \
+            --from-literal TYPEORM_USERNAME=${{ secrets.TYPEORM_USERNAME }} \
+            --from-literal TYPEORM_PASSWORD=${{ secrets.TYPEORM_PASSWORD }} \
+            --from-literal TYPEORM_DATABASE=${{ secrets.TYPEORM_DATABASE }} \
+            --from-literal TYPEORM_RETRY_ATTEMPTS=${{ secrets.TYPEORM_RETRY_ATTEMPTS }}
             kubectl apply -f /srv/k8s/back
             minikube addons enable ingress
             echo ${{ secrets.REMOTE_USER_PASSWORD }} | sudo -S systemctl restart nginx
